@@ -111,6 +111,9 @@ class VGG19(torch.nn.Module):
     def __init__(self):
         super(VGG19, self).__init__()
         features = models.vgg19(pretrained=True).features
+        for i in range(len(features)):
+            if isinstance(features[i], torch.nn.ReLU):
+                features[i] = torch.nn.ReLU(inplace=False)
         self.relu1_1 = torch.nn.Sequential()
         self.relu1_2 = torch.nn.Sequential()
 

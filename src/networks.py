@@ -43,15 +43,15 @@ class InpaintGenerator(BaseNetwork):
             nn.ReflectionPad2d(3),
             nn.Conv2d(in_channels=4, out_channels=64, kernel_size=7, padding=0),
             nn.InstanceNorm2d(64, track_running_stats=False),
-            nn.ReLU(True),
+            nn.ReLU(inplace=False),
 
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=4, stride=2, padding=1),
             nn.InstanceNorm2d(128, track_running_stats=False),
-            nn.ReLU(True),
+            nn.ReLU(inplace=False),
 
             nn.Conv2d(in_channels=128, out_channels=256, kernel_size=4, stride=2, padding=1),
             nn.InstanceNorm2d(256, track_running_stats=False),
-            nn.ReLU(True)
+            nn.ReLU(inplace=False)
         )
 
         blocks = []
@@ -64,11 +64,11 @@ class InpaintGenerator(BaseNetwork):
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4, stride=2, padding=1),
             nn.InstanceNorm2d(128, track_running_stats=False),
-            nn.ReLU(True),
+            nn.ReLU(inplace=False),
 
             nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4, stride=2, padding=1),
             nn.InstanceNorm2d(64, track_running_stats=False),
-            nn.ReLU(True),
+            nn.ReLU(inplace=False),
 
             nn.ReflectionPad2d(3),
             nn.Conv2d(in_channels=64, out_channels=3, kernel_size=7, padding=0),
@@ -94,15 +94,15 @@ class EdgeGenerator(BaseNetwork):
             nn.ReflectionPad2d(3),
             spectral_norm(nn.Conv2d(in_channels=3, out_channels=64, kernel_size=7, padding=0), use_spectral_norm),
             nn.InstanceNorm2d(64, track_running_stats=False),
-            nn.ReLU(True),
+            nn.ReLU(inplace=False),
 
             spectral_norm(nn.Conv2d(in_channels=64, out_channels=128, kernel_size=4, stride=2, padding=1), use_spectral_norm),
             nn.InstanceNorm2d(128, track_running_stats=False),
-            nn.ReLU(True),
+            nn.ReLU(inplace=False),
 
             spectral_norm(nn.Conv2d(in_channels=128, out_channels=256, kernel_size=4, stride=2, padding=1), use_spectral_norm),
             nn.InstanceNorm2d(256, track_running_stats=False),
-            nn.ReLU(True)
+            nn.ReLU(inplace=False)
         )
 
         blocks = []
@@ -115,11 +115,11 @@ class EdgeGenerator(BaseNetwork):
         self.decoder = nn.Sequential(
             spectral_norm(nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4, stride=2, padding=1), use_spectral_norm),
             nn.InstanceNorm2d(128, track_running_stats=False),
-            nn.ReLU(True),
+            nn.ReLU(inplace=False),
 
             spectral_norm(nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4, stride=2, padding=1), use_spectral_norm),
             nn.InstanceNorm2d(64, track_running_stats=False),
-            nn.ReLU(True),
+            nn.ReLU(inplace=False),
 
             nn.ReflectionPad2d(3),
             nn.Conv2d(in_channels=64, out_channels=1, kernel_size=7, padding=0),
@@ -143,22 +143,22 @@ class Discriminator(BaseNetwork):
 
         self.conv1 = self.features = nn.Sequential(
             spectral_norm(nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=4, stride=2, padding=1, bias=not use_spectral_norm), use_spectral_norm),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.LeakyReLU(0.2, inplace=False),
         )
 
         self.conv2 = nn.Sequential(
             spectral_norm(nn.Conv2d(in_channels=64, out_channels=128, kernel_size=4, stride=2, padding=1, bias=not use_spectral_norm), use_spectral_norm),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.LeakyReLU(0.2, inplace=False),
         )
 
         self.conv3 = nn.Sequential(
             spectral_norm(nn.Conv2d(in_channels=128, out_channels=256, kernel_size=4, stride=2, padding=1, bias=not use_spectral_norm), use_spectral_norm),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.LeakyReLU(0.2, inplace=False),
         )
 
         self.conv4 = nn.Sequential(
             spectral_norm(nn.Conv2d(in_channels=256, out_channels=512, kernel_size=4, stride=1, padding=1, bias=not use_spectral_norm), use_spectral_norm),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.LeakyReLU(0.2, inplace=False),
         )
 
         self.conv5 = nn.Sequential(
@@ -189,7 +189,7 @@ class ResnetBlock(nn.Module):
             nn.ReflectionPad2d(dilation),
             spectral_norm(nn.Conv2d(in_channels=dim, out_channels=dim, kernel_size=3, padding=0, dilation=dilation, bias=not use_spectral_norm), use_spectral_norm),
             nn.InstanceNorm2d(dim, track_running_stats=False),
-            nn.ReLU(True),
+            nn.ReLU(inplace=False),
 
             nn.ReflectionPad2d(1),
             spectral_norm(nn.Conv2d(in_channels=dim, out_channels=dim, kernel_size=3, padding=0, dilation=1, bias=not use_spectral_norm), use_spectral_norm),

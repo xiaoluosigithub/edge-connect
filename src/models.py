@@ -40,6 +40,11 @@ class BaseModel(nn.Module):
 
             self.discriminator.load_state_dict(data['discriminator'])
 
+        try:
+            nn.utils.remove_spectral_norm(self.discriminator.conv4[0])
+            nn.utils.remove_spectral_norm(self.discriminator.conv5[0])
+        except Exception:
+            pass
     def save(self):
         print('\nsaving %s...\n' % self.name)
         torch.save({
@@ -110,10 +115,12 @@ class EdgeModel(BaseModel):
 
 
         # generator adversarial loss
+        self.discriminator.eval()
         gen_input_fake = torch.cat((images, outputs), dim=1)
         gen_fake, gen_fake_feat = self.discriminator(gen_input_fake)        # in: (grayscale(1) + edge(1))
         gen_gan_loss = self.adversarial_loss(gen_fake, True, False)
         gen_loss += gen_gan_loss
+        self.discriminator.train()
 
 
         # generator feature matching loss
@@ -141,13 +148,17 @@ class EdgeModel(BaseModel):
         return outputs
 
     def backward(self, gen_loss=None, dis_loss=None):
+        if gen_loss is not None:
+            for p in self.discriminator.parameters():
+                p.requires_grad = False
+            gen_loss.backward()
+            self.gen_optimizer.step()
+            for p in self.discriminator.parameters():
+                p.requires_grad = True
+
         if dis_loss is not None:
             dis_loss.backward()
-        self.dis_optimizer.step()
-
-        if gen_loss is not None:
-            gen_loss.backward()
-        self.gen_optimizer.step()
+            self.dis_optimizer.step()
 
 
 class InpaintingModel(BaseModel):
@@ -212,10 +223,12 @@ class InpaintingModel(BaseModel):
 
 
         # generator adversarial loss
+        self.discriminator.eval()
         gen_input_fake = outputs
         gen_fake, _ = self.discriminator(gen_input_fake)                    # in: [rgb(3)]
         gen_gan_loss = self.adversarial_loss(gen_fake, True, False) * self.config.INPAINT_ADV_LOSS_WEIGHT
         gen_loss += gen_gan_loss
+        self.discriminator.train()
 
 
         # generator l1 loss
@@ -253,8 +266,11 @@ class InpaintingModel(BaseModel):
         return outputs
 
     def backward(self, gen_loss=None, dis_loss=None):
-        dis_loss.backward()
-        self.dis_optimizer.step()
-
+        for p in self.discriminator.parameters():
+            p.requires_grad = False
         gen_loss.backward()
         self.gen_optimizer.step()
+        for p in self.discriminator.parameters():
+            p.requires_grad = True
+        dis_loss.backward()
+        self.dis_optimizer.step()

@@ -1,13 +1,12 @@
 import os
 import glob
-import scipy
 import torch
 import random
 import numpy as np
 import torchvision.transforms.functional as F
 from torch.utils.data import DataLoader
 from PIL import Image
-from scipy.misc import imread
+from imageio.v2 import imread
 from skimage.feature import canny
 from skimage.color import rgb2gray, gray2rgb
 from .utils import create_mask
@@ -87,19 +86,19 @@ class Dataset(torch.utils.data.Dataset):
 
         # in test mode images are masked (with masked regions),
         # using 'mask' parameter prevents canny to detect edges for the masked regions
-        mask = None if self.training else (1 - mask / 255).astype(np.bool)
+        mask = None if self.training else (1 - mask / 255).astype(np.bool_)
 
         # canny
         if self.edge == 1:
             # no edge
             if sigma == -1:
-                return np.zeros(img.shape).astype(np.float)
+                return np.zeros(img.shape).astype(np.float32)
 
             # random sigma
             if sigma == 0:
                 sigma = random.randint(1, 4)
 
-            return canny(img, sigma=sigma, mask=mask).astype(np.float)
+            return canny(img, sigma=sigma, mask=mask).astype(np.float32)
 
         # external
         else:
@@ -146,7 +145,8 @@ class Dataset(torch.utils.data.Dataset):
         if mask_type == 6:
             mask = imread(self.mask_data[index])
             mask = self.resize(mask, imgh, imgw, centerCrop=False)
-            mask = rgb2gray(mask)
+            if len(mask.shape) == 3:
+                mask = rgb2gray(mask)
             mask = (mask > 0).astype(np.uint8) * 255
             return mask
 
@@ -157,17 +157,14 @@ class Dataset(torch.utils.data.Dataset):
 
     def resize(self, img, height, width, centerCrop=True):
         imgh, imgw = img.shape[0:2]
-
         if centerCrop and imgh != imgw:
-            # center crop
             side = np.minimum(imgh, imgw)
             j = (imgh - side) // 2
             i = (imgw - side) // 2
             img = img[j:j + side, i:i + side, ...]
-
-        img = scipy.misc.imresize(img, [height, width])
-
-        return img
+        im = Image.fromarray(img)
+        im = im.resize((width, height), Image.BICUBIC)
+        return np.array(im)
 
     def load_flist(self, flist):
         if isinstance(flist, list):
@@ -182,7 +179,8 @@ class Dataset(torch.utils.data.Dataset):
 
             if os.path.isfile(flist):
                 try:
-                    return np.genfromtxt(flist, dtype=np.str, encoding='utf-8')
+                    with open(flist, 'r', encoding='utf-8') as f:
+                        return [line.strip() for line in f if line.strip()]
                 except:
                     return [flist]
 

@@ -1,0 +1,47 @@
+MODE: 1             # 1：训练，2：测试，3：评估
+MODEL: 2            # 1：边缘模型，2：修复模型，3：边缘-修复模型，4：联合模型
+MASK: 3             # 1：随机方块，2：半幅，3：外部，4：（外部 + 随机方块），5：（外部 + 随机方块 + 半幅）
+EDGE: 1             # 1：Canny，2：外部
+NMS: 1              # 0：不做非极大值抑制，1：对外部边缘做非极大值抑制（与 Canny 相乘）
+SEED: 10            # 随机数种子
+GPU: [0]            # GPU id 列表
+DEBUG: 0            # 调试模式开关
+VERBOSE: 0          # 详细输出开关
+
+TRAIN_FLIST: ./datasets/bihua_train.flist
+VAL_FLIST: ./datasets/bihua_train.flist
+TEST_FLIST: ./datasets/bihua_train.flist
+
+TRAIN_EDGE_FLIST: 
+VAL_EDGE_FLIST: 
+TEST_EDGE_FLIST: 
+
+TRAIN_MASK_FLIST: ./datasets/bihua_mask.flist
+VAL_MASK_FLIST: ./datasets/bihua_mask.flist
+TEST_MASK_FLIST: ./datasets/bihua_mask.flist
+
+LR: 0.0001                    # 学习率
+D2G_LR: 0.1                   # 判别器/生成器学习率比例
+BETA1: 0.0                    # Adam 优化器 beta1
+BETA2: 0.9                    # Adam 优化器 beta2
+BATCH_SIZE: 8                 # 训练输入批大小
+INPUT_SIZE: 256               # 训练输入图像尺寸（0 表示使用原始尺寸）
+SIGMA: 2                      # Canny 中高斯滤波标准差（0：随机，-1：不做边缘）
+MAX_ITERS: 2010000                # 最大训练迭代次数
+START_ITER: 2e6
+
+EDGE_THRESHOLD: 0.5           # 边缘检测阈值
+L1_LOSS_WEIGHT: 1             # L1 损失权重
+FM_LOSS_WEIGHT: 10            # 特征匹配损失权重
+STYLE_LOSS_WEIGHT: 250        # 风格损失权重
+CONTENT_LOSS_WEIGHT: 0.1      # 感知（内容）损失权重
+INPAINT_ADV_LOSS_WEIGHT: 0.1  # 修复对抗损失权重
+
+GAN_LOSS: nsgan               # nsgan | lsgan | hinge
+GAN_POOL_SIZE: 0              # 假图像池大小
+
+SAVE_INTERVAL: 1000           # 保存模型的迭代间隔（0：从不保存）
+SAMPLE_INTERVAL: 1000         # 保存采样的迭代间隔（0：不保存）
+SAMPLE_SIZE: 12               # 每次采样的图像数量
+EVAL_INTERVAL: 0              # 评估模型的迭代间隔（0：不评估）
+LOG_INTERVAL: 10              # 打印训练损失的迭代间隔（0：不打印）
